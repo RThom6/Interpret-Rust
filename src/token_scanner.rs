@@ -1,7 +1,17 @@
+mod token_scanner;
+
+pub mod token_scanner;
+
 #[derive(Debug)]
 pub enum Token {
     Plus,
     Minus,
+    BraceLeft,
+    BraceRight,
+    BracketLeft,
+    BracketRight,
+    ParenthesesLeft,
+    ParenthesesRight,
     EqualEqual,
     NotEqual,
     Equal,
@@ -12,7 +22,11 @@ pub enum Token {
     Number(u32),
     StringLiteral(String),
     Invalid(String),
+    VariableName(String),
+    Keyword(String),
 }
+
+static KEYWORDS: [String; 10] = [""]; // Placeholder until I make keywords
 
 fn get_tokens(input: String) -> Vec<Token> {
     let mut char_indices = input.char_indices();
@@ -26,6 +40,12 @@ fn get_tokens(input: String) -> Vec<Token> {
                 Some(_equals) => Token::EqualEqual,
                 None => Token::Equal,
             },
+            '{' => Token::BraceLeft,
+            '}' => Token::BraceRight,
+            '(' => Token::BracketLeft,
+            ')' => Token::BracketRight,
+            '[' => Token::ParenthesesLeft,
+            ']' => Token::ParenthesesRight,
             '!' => match char_indices.next() {
                 // Add cases for braces and functions i guess
                 '=' => Token::NotEqual,
@@ -50,6 +70,19 @@ fn get_tokens(input: String) -> Vec<Token> {
                 }
 
                 Token::StringLiteral(s);
+            }
+            'a'..='z' | 'A'..='Z' => {
+                let s: String = char_indices
+                    .by_ref()
+                    .take_while(|(_pos, c)| *c != "")
+                    .map(|(_pos, c)| c)
+                    .collect();
+
+                if KEYWORDS.contains(s) {
+                    Token::Keyword(s);
+                } else {
+                    Token::Variable(s);
+                }
             }
             _ => Token::Invalid(format!("{}", ch)),
         };
