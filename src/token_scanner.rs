@@ -1,7 +1,4 @@
-mod token_scanner;
-
-pub mod token_scanner;
-
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Token {
     Plus,
@@ -12,6 +9,10 @@ pub enum Token {
     BracketRight,
     ParenthesesLeft,
     ParenthesesRight,
+    GreaterThan,
+    LessThan,
+    GreaterEqual,
+    LessEqual,
     EqualEqual,
     NotEqual,
     Equal,
@@ -26,66 +27,124 @@ pub enum Token {
     Keyword(String),
 }
 
-static KEYWORDS: [String; 10] = [""]; // Placeholder until I make keywords
+#[allow(dead_code)]
+static KEYWORDS: [&str; 10] = [
+    "if", "else", "while", "for", "return", "break", "continue", "null", "a", "b",
+]; // TODO: Make more keywords
 
-fn get_tokens(input: String) -> Vec<Token> {
-    let mut char_indices = input.char_indices();
-    let mut tokens: Vec<Token> = Vec::new();
+pub struct TokenScanner {
+    input: String,
+    tokens: Vec<Token>,
+    pos: usize,
+}
 
-    while let Some((pos, ch)) = char_indices.next() {
-        let token = match ch {
-            '+' => Token::Plus,
-            '-' => Token::Minus,
-            '=' => match char_indices.next_if_eq(&(pos + 1, '=')) {
-                Some(_equals) => Token::EqualEqual,
-                None => Token::Equal,
-            },
-            '{' => Token::BraceLeft,
-            '}' => Token::BraceRight,
-            '(' => Token::BracketLeft,
-            ')' => Token::BracketRight,
-            '[' => Token::ParenthesesLeft,
-            ']' => Token::ParenthesesRight,
-            '!' => match char_indices.next() {
-                // Add cases for braces and functions i guess
-                '=' => Token::NotEqual,
-                _ => Token::Invalid("!".to_string()),
-            },
-            '"' => {
-                let mut last_matched: char = '\0';
-
-                let s: String = char_indices
-                    .by_ref() // borrow mutable copy
-                    .take_while(|(_pos, c)| {
-                        // Keep track of last matched to invalidated if it doesn't end with '"' and we reach EOF
-                        last_matched = *c;
-                        *c != '"';
-                    }) // Take from input stream until reaching '"'
-                    .map(|(_pos, c)| c) // Map the characters onto c
-                    .collect(); // Basically collects entire strings from stream. TODO: doesn't think about escaped characters but I can sort this later
-
-                match last_matched {
-                    '"' => Token::StringLiteral(s),
-                    _ => Token::Invalid("Unterminated literal".to_string()),
-                }
-
-                Token::StringLiteral(s);
-            }
-            'a'..='z' | 'A'..='Z' => {
-                let s: String = char_indices
-                    .by_ref()
-                    .take_while(|(_pos, c)| *c != "")
-                    .map(|(_pos, c)| c)
-                    .collect();
-
-                if KEYWORDS.contains(s) {
-                    Token::Keyword(s);
-                } else {
-                    Token::Variable(s);
-                }
-            }
-            _ => Token::Invalid(format!("{}", ch)),
+impl TokenScanner {
+    pub fn new(input: String) -> Self {
+        let mut scanner = TokenScanner {
+            input,
+            tokens: Vec::new(),
+            pos: 0,
         };
-        tokens.push(token);
+        scanner.populate_tokens();
+        scanner
+    }
+
+    pub fn next_token(&mut self) -> Option<&Token> {
+        if self.pos >= self.tokens.len() {
+            return None;
+        }
+
+        let token = self.tokens.get(self.pos).unwrap();
+        self.pos += 1;
+        Some(token)
+    }
+}
+
+impl TokenScanner {
+    fn populate_tokens(&mut self) {
+        let mut chars = self.input.char_indices().peekable();
+
+        while let Some((_pos, ch)) = chars.next() {
+            let token = match ch {
+                ' ' | '\n' | '\t' | '\r' => continue,
+                '+' => Token::Plus,
+                '-' => Token::Minus,
+                '=' => {
+                    if let Some((_, '=')) = chars.peek() {
+                        chars.next();
+                        Token::EqualEqual
+                    } else {
+                        Token::Equal
+                    }
+                }
+                '>' => match chars.peek() {
+                    Some((_, '=')) => {
+                        chars.next();
+                        Token::GreaterEqual
+                    }
+                    _ => Token::GreaterThan,
+                },
+                '<' => match chars.peek() {
+                    Some((_, '=')) => {
+                        chars.next();
+                        Token::LessEqual
+                    }
+                    _ => Token::LessThan,
+                },
+                '{' => Token::BraceLeft,
+                '}' => Token::BraceRight,
+                '(' => Token::BracketLeft,
+                ')' => Token::BracketRight,
+                '[' => Token::ParenthesesLeft,
+                ']' => Token::ParenthesesRight,
+                '!' => {
+                    if let Some((_, '=')) = chars.peek() {
+                        chars.next();
+                        Token::EqualEqual
+                    } else {
+                        Token::Invalid("!".to_string())
+                    }
+                }
+                '"' => {
+                    let mut s = String::new();
+
+                    // Keep reading until another '"' or eof
+                    // TODO: Handle escape sequences and invalid characters
+                    while let Some((_, c)) = chars.next() {
+                        if c == '"' {
+                            break;
+                        }
+                        s.push(c);
+                    }
+
+                    // If eof
+                    if !s.ends_with('"') && chars.peek().is_none() {
+                        Token::Invalid("Unterminated string literal".to_string())
+                    } else {
+                        Token::StringLiteral(s)
+                    }
+                }
+                'a'..='z' | 'A'..='Z' => {
+                    let mut s = ch.to_string();
+
+                    while let Some((_, c)) = chars.peek() {
+                        if c.is_alphanumeric() {
+                            s.push(*c);
+                            chars.next();
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if KEYWORDS.contains(&s.as_str()) {
+                        Token::Keyword(s)
+                    } else {
+                        Token::VariableName(s)
+                    }
+                }
+                _ => Token::Invalid(format!("{}", ch)),
+            };
+            self.tokens.push(token);
+        }
     }
 }
