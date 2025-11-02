@@ -4,6 +4,8 @@ use std::{
     io,
     process::exit,
 };
+mod token_scanner;
+use token_scanner::TokenScanner;
 
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
@@ -21,7 +23,6 @@ fn main() {
 fn run_file(path: &String) {
     let file_contents: String =
         fs::read_to_string(&path).unwrap_or_else(|_| panic!("Could not read file: {}", path));
-
     run(file_contents);
 }
 
@@ -33,4 +34,9 @@ fn run_prompt() {
         .expect("Failed to read line");
 }
 
-fn run(contents: String) {}
+fn run(contents: String) {
+    let mut scanner = TokenScanner::new(contents);
+    while let Some(token) = scanner.next_token() {
+        println!("{:?}", token);
+    }
+}
