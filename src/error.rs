@@ -28,5 +28,5 @@ pub fn error_with_trace(message: String, line: u64, mut error: Error) -> Error {
 }
 
 fn report(error: Error) {
-    eprintln!()
+    eprintln!("{}", error.to_string());
 }
