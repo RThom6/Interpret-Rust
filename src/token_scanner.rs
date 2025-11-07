@@ -22,15 +22,16 @@ pub enum Token {
     EqualMinus,
     Number(u32),
     StringLiteral(String),
+    CharLiteral(char),
     Invalid(String),
     VariableName(String),
     Keyword(String),
-}
+} // TODO: Do I want invalid tokens? Optionally I could just error when I reach an invalid token? It would let me make a full trace of what's wrong with the input if I didn't error out immediately.
 
 #[allow(dead_code)]
 static KEYWORDS: [&str; 10] = [
     "if", "else", "while", "for", "return", "break", "continue", "null", "a", "b",
-]; // TODO: Make more keywords
+]; // TODO: Make more keywords - replace a, b placeholders
 
 pub struct TokenScanner {
     input: String,
@@ -109,19 +110,28 @@ impl TokenScanner {
                     let mut s = String::new();
 
                     // Keep reading until another '"' or eof
-                    // TODO: Handle escape sequences and invalid characters
+                    // TODO: Handle escape sequences and invalid characters - Is this needed? Could be handled within things that work with strings.
                     while let Some((_, c)) = chars.next() {
                         if c == '"' {
                             break;
                         }
+
                         s.push(c);
                     }
 
-                    // If eof
+                    // If end of string
                     if !s.ends_with('"') && chars.peek().is_none() {
                         Token::Invalid("Unterminated string literal".to_string())
                     } else {
                         Token::StringLiteral(s)
+                    }
+                }
+                '\'' => {
+                    let character: char = chars.next().unwrap().1;
+                    if chars.next().unwrap().1 == '\'' {
+                        Token::CharLiteral(character)
+                    } else {
+                        Token::Invalid("Unterminated character literal".to_string())
                     }
                 }
                 'a'..='z' | 'A'..='Z' => {
