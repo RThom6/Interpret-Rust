@@ -1,41 +1,16 @@
-#[allow(dead_code)]
-#[derive(Debug)]
-pub enum Token {
-    Plus,
-    Minus,
-    BraceLeft,
-    BraceRight,
-    BracketLeft,
-    BracketRight,
-    ParenthesesLeft,
-    ParenthesesRight,
-    GreaterThan,
-    LessThan,
-    GreaterEqual,
-    LessEqual,
-    EqualEqual,
-    NotEqual,
-    Equal,
-    PlusEqual,
-    MinusEqual,
-    EqualPlus,
-    EqualMinus,
-    Number(u32),
-    StringLiteral(String),
-    CharLiteral(char),
-    Invalid(String),
-    VariableName(String),
-    Keyword(String),
-} // TODO: Do I want invalid tokens? Optionally I could just error when I reach an invalid token? It would let me make a full trace of what's wrong with the input if I didn't error out immediately.
+use std::process::exit;
+
+use crate::error::{Error, report};
+use crate::token::{Keyword, Token, TokenType};
 
 #[allow(dead_code)]
-static KEYWORDS: [&str; 10] = [
-    "if", "else", "while", "for", "return", "break", "continue", "null", "a", "b",
-]; // TODO: Make more keywords - replace a, b placeholders
+static KEYWORDS: [&str; 8] = [
+    "if", "else", "while", "for", "return", "break", "continue", "null",
+];
 
 pub struct TokenScanner {
     input: String,
-    tokens: Vec<Token>,
+    tokens: Vec<TokenType>,
     pos: usize,
 }
 
@@ -50,14 +25,18 @@ impl TokenScanner {
         scanner
     }
 
-    pub fn next_token(&mut self) -> Option<&Token> {
+    pub fn next_token(&mut self) -> Option<&TokenType> {
         if self.pos >= self.tokens.len() {
-            return None;
+            None
+        } else {
+            let t = &self.tokens[self.pos];
+            self.pos += 1;
+            Some(t)
         }
+    }
 
-        let token = self.tokens.get(self.pos).unwrap();
-        self.pos += 1;
-        Some(token)
+    pub fn peek_token(&self) -> Option<&TokenType> {
+        self.tokens.get(self.pos)
     }
 }
 
@@ -65,80 +44,123 @@ impl TokenScanner {
     fn populate_tokens(&mut self) {
         let mut chars = self.input.char_indices().peekable();
 
-        while let Some((_pos, ch)) = chars.next() {
-            let token = match ch {
-                ' ' | '\n' | '\t' | '\r' => continue,
-                '+' => Token::Plus,
-                '-' => Token::Minus,
+        while let Some((_, ch)) = chars.peek().cloned() {
+            match ch {
+                ' ' | '\n' | '\t' | '\r' => {
+                    chars.next();
+                }
+                '+' => {
+                    chars.next();
+                    self.tokens.push(TokenType::Plus);
+                }
+                '-' => {
+                    chars.next();
+                    self.tokens.push(TokenType::Minus);
+                }
                 '=' => {
-                    if let Some((_, '=')) = chars.peek() {
-                        chars.next();
-                        Token::EqualEqual
+                    chars.next();
+                    if Self::match_expected(&mut chars, '=') {
+                        self.tokens.push(TokenType::EqualEqual);
                     } else {
-                        Token::Equal
+                        self.tokens.push(TokenType::Equal);
                     }
                 }
-                '>' => match chars.peek() {
-                    Some((_, '=')) => {
-                        chars.next();
-                        Token::GreaterEqual
-                    }
-                    _ => Token::GreaterThan,
-                },
-                '<' => match chars.peek() {
-                    Some((_, '=')) => {
-                        chars.next();
-                        Token::LessEqual
-                    }
-                    _ => Token::LessThan,
-                },
-                '{' => Token::BraceLeft,
-                '}' => Token::BraceRight,
-                '(' => Token::BracketLeft,
-                ')' => Token::BracketRight,
-                '[' => Token::ParenthesesLeft,
-                ']' => Token::ParenthesesRight,
-                '!' => {
-                    if let Some((_, '=')) = chars.peek() {
-                        chars.next();
-                        Token::EqualEqual
+                '>' => {
+                    chars.next();
+                    if Self::match_expected(&mut chars, '=') {
+                        self.tokens.push(TokenType::GreaterEqual);
                     } else {
-                        Token::Invalid("!".to_string())
+                        self.tokens.push(TokenType::GreaterThan);
                     }
+                }
+                '<' => {
+                    chars.next();
+                    if Self::match_expected(&mut chars, '=') {
+                        self.tokens.push(TokenType::LessEqual);
+                    } else {
+                        self.tokens.push(TokenType::LessThan);
+                    }
+                }
+                '!' => {
+                    chars.next();
+                    if Self::match_expected(&mut chars, '=') {
+                        self.tokens.push(TokenType::NotEqual);
+                    } else {
+                        self.tokens
+                            .push(TokenType::Invalid("Unexpected '!'".into()));
+                    }
+                }
+                '{' => {
+                    chars.next();
+                    self.tokens.push(TokenType::BraceLeft);
+                }
+                '}' => {
+                    chars.next();
+                    self.tokens.push(TokenType::BraceRight);
+                }
+                '(' => {
+                    chars.next();
+                    self.tokens.push(TokenType::BracketLeft);
+                }
+                ')' => {
+                    chars.next();
+                    self.tokens.push(TokenType::BracketRight);
+                }
+                '[' => {
+                    chars.next();
+                    self.tokens.push(TokenType::ParenthesesLeft);
+                }
+                ']' => {
+                    chars.next();
+                    self.tokens.push(TokenType::ParenthesesRight);
                 }
                 '"' => {
+                    chars.next();
                     let mut s = String::new();
 
-                    // Keep reading until another '"' or eof
-                    // TODO: Handle escape sequences and invalid characters - Is this needed? Could be handled within things that work with strings.
                     while let Some((_, c)) = chars.next() {
                         if c == '"' {
                             break;
                         }
-
                         s.push(c);
                     }
 
-                    // If end of string
-                    if !s.ends_with('"') && chars.peek().is_none() {
-                        Token::Invalid("Unterminated string literal".to_string())
+                    if chars.peek().is_none() {
+                        self.tokens
+                            .push(TokenType::Invalid("Unterminated string literal".into()));
                     } else {
-                        Token::StringLiteral(s)
+                        self.tokens.push(TokenType::StringLiteral(s));
                     }
                 }
                 '\'' => {
-                    let character: char = chars.next().unwrap().1;
-                    if chars.next().unwrap().1 == '\'' {
-                        Token::CharLiteral(character)
-                    } else {
-                        Token::Invalid("Unterminated character literal".to_string())
+                    chars.next();
+
+                    let char_value = match chars.next() {
+                        Some((_, c)) => c,
+                        None => {
+                            self.tokens
+                                .push(TokenType::Invalid("Unterminated character literal".into()));
+                            continue;
+                        }
+                    };
+
+                    match chars.next() {
+                        Some((_, '\'')) => {
+                            self.tokens.push(TokenType::CharLiteral(char_value));
+                        }
+                        _ => {
+                            self.tokens
+                                .push(TokenType::Invalid("Unterminated character literal".into()));
+                        }
                     }
                 }
-                'a'..='z' | 'A'..='Z' => {
-                    let mut s = ch.to_string();
+                'a'..='z' | 'A'..='Z' | '_' => {
+                    let mut s = String::new();
+                    s.push(ch);
+                    chars.next();
 
                     while let Some((_, c)) = chars.peek() {
-                        if c.is_alphanumeric() {
+                        if c.is_alphanumeric() || *c == '_' {
                             s.push(*c);
                             chars.next();
                         } else {
@@ -147,14 +169,29 @@ impl TokenScanner {
                     }
 
                     if KEYWORDS.contains(&s.as_str()) {
-                        Token::Keyword(s)
+                        self.tokens.push(TokenType::Keyword(s));
                     } else {
-                        Token::VariableName(s)
+                        self.tokens.push(TokenType::Identifier(s));
                     }
                 }
-                _ => Token::Invalid(format!("{}", ch)),
-            };
-            self.tokens.push(token);
+                _ => {
+                    report(Error::new("Invalid Character Placeholder", 16));
+                    exit(1);
+                }
+            }
+        }
+    }
+
+    fn match_expected<I: Iterator<Item = (usize, char)>>(
+        chars: &mut std::iter::Peekable<I>,
+        expected: char,
+    ) -> bool {
+        match chars.peek() {
+            Some((_, c)) if *c == expected => {
+                chars.next();
+                true
+            }
+            _ => false,
         }
     }
 }
