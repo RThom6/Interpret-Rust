@@ -1,12 +1,14 @@
 pub struct Error {
-    message: String,
+    message: &'static str,
     trace: String,
     line: u64,
 }
 
 impl Error {
-    pub fn new(message: String, line: u64) -> Self {
-        Error {
+    // TODO: String manipulation for useful error messages that point out where in a line an error occurred
+    // TODO: Full blown error reporter class for different reporting strategies
+    pub fn new(message: &'static str, line: u64) -> Self {
+        Self {
             message,
             trace: String::new(),
             line,
@@ -18,15 +20,15 @@ impl Error {
     }
 }
 
-pub fn error(message: String, line: u64) -> Error {
+pub fn error(message: &'static str, line: u64) -> Error {
     Error::new(message, line)
 }
 
-pub fn error_with_trace(message: String, line: u64, mut error: Error) -> Error {
+pub fn error_with_trace(message: &'static str, line: u64, mut error: Error) -> Error {
     error.trace = format!("{}\n{}: at line {}", error.trace, message, line);
     error
 }
 
-fn report(error: Error) {
+pub fn report(error: Error) {
     eprintln!("{}", error.to_string());
 }
