@@ -1,4 +1,6 @@
+use std::iter::Peekable;
 use std::process::exit;
+use std::str::CharIndices;
 
 use crate::error::{Error, report};
 use crate::token::{Keyword, Token, TokenType};
@@ -10,8 +12,10 @@ static KEYWORDS: [&str; 8] = [
 
 pub struct TokenScanner {
     input: String,
+    chars: Peekable<CharIndices<'static>>,
     tokens: Vec<TokenType>,
     pos: usize,
+    line: usize,
 }
 
 impl TokenScanner {
@@ -20,6 +24,8 @@ impl TokenScanner {
             input,
             tokens: Vec::new(),
             pos: 0,
+            line: 0,
+            chars: "".char_indices().peekable(),
         };
         scanner.populate_tokens();
         scanner
@@ -46,8 +52,11 @@ impl TokenScanner {
 
         while let Some((_, ch)) = chars.peek().cloned() {
             match ch {
-                ' ' | '\n' | '\t' | '\r' => {
+                ' ' | '\t' | '\r' => {
                     chars.next();
+                }
+                '\n' => {
+                    self.line += 1;
                 }
                 '+' => {
                     chars.next();
@@ -174,12 +183,51 @@ impl TokenScanner {
                         self.tokens.push(TokenType::Identifier(s));
                     }
                 }
+                '/' => {
+                    // Lets us ignore comments and handle division :)
+                    if let Some((_, '/')) = chars.peek() {
+                        chars.next();
+                        while let Some((_, c)) = chars.peek() {
+                            if *c == '\n' {
+                                // TODO: Add eof? We'd get stuck without it or reach an error state. Should look at this in multiple locations
+                                break;
+                            }
+                            chars.next();
+                        }
+                    } else if let Some((_, '*')) = chars.peek() {
+                        chars.next();
+                        while let Some((_, c)) = chars.peek() {
+                            if *c == '*' {
+                                chars.next();
+                                if let Some((_, '/')) = chars.peek() {
+                                    chars.next();
+                                    break;
+                                }
+                            }
+                            chars.next();
+                        }
+                    } else {
+                        self.tokens.push(TokenType::Divide);
+                    }
+                }
+                '*' => {
+                    self.tokens.push(TokenType::Multiply);
+                }
                 _ => {
+                    if ch.is_digit(10) {
+                        self.number();
+                    }
                     report(Error::new("Invalid Character Placeholder", 16));
                     exit(1);
                 }
             }
         }
+    }
+
+    fn advance(&mut self) {}
+
+    fn number(&mut self) {
+        let start = self.pos;
     }
 
     fn match_expected<I: Iterator<Item = (usize, char)>>(
