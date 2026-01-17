@@ -1,6 +1,8 @@
 use std::iter::Peekable;
 use std::process::exit;
 use std::str::CharIndices;
+use std::thread::sleep;
+use std::time::Duration;
 
 use crate::error::{Error, report};
 use crate::token::{Keyword, Token, TokenType};
@@ -50,13 +52,15 @@ impl TokenScanner {
     fn populate_tokens(&mut self) {
         let mut chars = self.input.char_indices().peekable();
 
-        while let Some((_, ch)) = chars.peek().cloned() {
+        // Does this fall off gracefully at EOF?
+        while let Some((a, ch)) = chars.peek().cloned() {
             match ch {
                 ' ' | '\t' | '\r' => {
                     chars.next();
                 }
                 '\n' => {
                     self.line += 1;
+                    chars.next();
                 }
                 '+' => {
                     chars.next();
@@ -178,17 +182,17 @@ impl TokenScanner {
                     }
 
                     if KEYWORDS.contains(&s.as_str()) {
-                        self.tokens.push(TokenType::Keyword(s));
+                        self.tokens.push(TokenType::Keyword(Keyword::from_str(s)));
                     } else {
                         self.tokens.push(TokenType::Identifier(s));
                     }
                 }
                 '/' => {
-                    // Lets us ignore comments and handle division :)
                     if let Some((_, '/')) = chars.peek() {
                         chars.next();
                         while let Some((_, c)) = chars.peek() {
                             if *c == '\n' {
+                                // Comments go until the end of a line
                                 // TODO: Add eof? We'd get stuck without it or reach an error state. Should look at this in multiple locations
                                 break;
                             }
@@ -213,10 +217,23 @@ impl TokenScanner {
                 '*' => {
                     self.tokens.push(TokenType::Multiply);
                 }
-                _ => {
-                    if ch.is_digit(10) {
-                        self.number();
+                '0'..='9' => {
+                    let mut s = "".to_owned();
+                    s.push(ch);
+
+                    while let Some((_, c)) = chars.peek() {
+                        if !c.is_digit(10) {
+                            self.tokens
+                                .push(TokenType::Number(s.parse::<u32>().unwrap()));
+                            break;
+                        }
+
+                        s.push(ch);
+                        chars.next();
                     }
+                }
+                ';' => self.tokens.push(TokenType::SemiColon),
+                _ => {
                     report(Error::new("Invalid Character Placeholder", 16));
                     exit(1);
                 }
@@ -224,12 +241,7 @@ impl TokenScanner {
         }
     }
 
-    fn advance(&mut self) {}
-
-    fn number(&mut self) {
-        let start = self.pos;
-    }
-
+    /// Checks whether the next character matches the expected character.
     fn match_expected<I: Iterator<Item = (usize, char)>>(
         chars: &mut std::iter::Peekable<I>,
         expected: char,

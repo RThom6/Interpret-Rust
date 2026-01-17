@@ -9,12 +9,15 @@ pub struct Token {
 pub enum TokenType {
     Plus,
     Minus,
+    Divide,
+    Multiply,
     BraceLeft,
     BraceRight,
     BracketLeft,
     BracketRight,
     ParenthesesLeft,
     ParenthesesRight,
+    SemiColon,
     GreaterThan,
     LessThan,
     GreaterEqual,
@@ -31,11 +34,11 @@ pub enum TokenType {
     CharLiteral(char),
     Invalid(String),
     Identifier(String),
-    Keyword(String),
+    Keyword(KeywordType),
     EOF,
 } // TODO: Do I want invalid tokens? Optionally I could just error when I reach an invalid token? It would let me make a full trace of what's wrong with the input if I didn't error out immediately.
 
-pub enum Keyword {
+pub enum KeywordType {
     If,
     Else,
     While,
@@ -56,7 +59,7 @@ impl Token {
     }
 }
 
-impl Keyword {
+impl KeywordType {
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
             "if" => Some(Self::If),
