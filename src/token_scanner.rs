@@ -1,11 +1,7 @@
-use std::iter::Peekable;
 use std::process::exit;
-use std::str::CharIndices;
-use std::thread::sleep;
-use std::time::Duration;
 
 use crate::error::{Error, report};
-use crate::token::{Keyword, Token, TokenType};
+use crate::token::{KeywordType, TokenType};
 
 #[allow(dead_code)]
 static KEYWORDS: [&str; 8] = [
@@ -14,7 +10,6 @@ static KEYWORDS: [&str; 8] = [
 
 pub struct TokenScanner {
     input: String,
-    chars: Peekable<CharIndices<'static>>,
     tokens: Vec<TokenType>,
     pos: usize,
     line: usize,
@@ -27,7 +22,6 @@ impl TokenScanner {
             tokens: Vec::new(),
             pos: 0,
             line: 0,
-            chars: "".char_indices().peekable(),
         };
         scanner.populate_tokens();
         scanner
@@ -53,12 +47,13 @@ impl TokenScanner {
         let mut chars = self.input.char_indices().peekable();
 
         // Does this fall off gracefully at EOF?
-        while let Some((a, ch)) = chars.peek().cloned() {
+        while let Some((_, ch)) = chars.peek().cloned() {
             match ch {
                 ' ' | '\t' | '\r' => {
                     chars.next();
                 }
                 '\n' => {
+                    // don't terminate expression by new line
                     self.line += 1;
                     chars.next();
                 }
@@ -182,7 +177,8 @@ impl TokenScanner {
                     }
 
                     if KEYWORDS.contains(&s.as_str()) {
-                        self.tokens.push(TokenType::Keyword(Keyword::from_str(s)));
+                        self.tokens
+                            .push(TokenType::Keyword(KeywordType::from_str(&s).unwrap())); // TODO: Error handling
                     } else {
                         self.tokens.push(TokenType::Identifier(s));
                     }

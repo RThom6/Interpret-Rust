@@ -38,6 +38,7 @@ pub enum TokenType {
     EOF,
 } // TODO: Do I want invalid tokens? Optionally I could just error when I reach an invalid token? It would let me make a full trace of what's wrong with the input if I didn't error out immediately.
 
+#[derive(Debug)]
 pub enum KeywordType {
     If,
     Else,
