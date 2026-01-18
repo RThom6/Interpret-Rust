@@ -1,7 +1,7 @@
 pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: String,
-    pub line: u32,
+    pub lexeme: &'static str,
+    pub line: usize,
 }
 
 #[allow(dead_code)]
@@ -51,7 +51,7 @@ pub enum KeywordType {
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, line: u32) -> Self {
+    pub fn new(token_type: TokenType, lexeme: &str, line: usize) -> Self {
         Self {
             token_type,
             lexeme,

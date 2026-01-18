@@ -1,0 +1,14 @@
+### What is this?
+
+This file contains the grammar of the language I am creating this interpreter for. It shouldn't be too crazy but won't be half as thorough as your usual language. But that's fine because the main goals of this project are handling the interpreting and such, not the language itself.
+In this example, words starting with capital letters are my Non-terminals and lowercase words are Terminals. Fully capitalise words represent literal types such as a number literal, a string literal, or an identifier. Each option is separated by a pipe '|' and any of the options can be picked when its Non-terminal is present.
+
+### The Language
+
+Expression -> Literal | Unary | Binary | Grouping
+Literal -> NUMBER | STRING | true | false | null
+Grouping -> ( Expression ) | { Expression }
+Unary -> UnaryOperator Expression
+UnaryOperator -> - | !
+Binary -> Expression Operator Expression
+Operator -> == | != | < | <= | > | >= | + | - | * | /
