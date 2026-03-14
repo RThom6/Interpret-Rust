@@ -1,6 +1,7 @@
+#[derive(Debug)]
 pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: &'static str,
+    pub lexeme: String,
     pub line: usize,
 }
 
@@ -11,6 +12,7 @@ pub enum TokenType {
     Minus,
     Divide,
     Multiply,
+    Bang,
     BraceLeft,
     BraceRight,
     BracketLeft,
@@ -54,7 +56,7 @@ impl Token {
     pub fn new(token_type: TokenType, lexeme: &str, line: usize) -> Self {
         Self {
             token_type,
-            lexeme,
+            lexeme: lexeme.to_string(),
             line,
         }
     }

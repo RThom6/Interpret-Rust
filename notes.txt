@@ -1,0 +1,4 @@
+Visitor Pattern:
+    Visitor 'visits' a method, that method called the visitor's visit method and passes itself as an argument.
+    (e.g. accept(visitor) => visitor.visit(self))
+Visitor then doesn't need to know who its visiting as the visited calls the correct method.

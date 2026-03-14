@@ -5,6 +5,7 @@ use std::{
     process::exit,
 };
 pub mod error;
+pub mod expr;
 pub mod token;
 mod token_scanner;
 use token_scanner::TokenScanner;

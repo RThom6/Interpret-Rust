@@ -31,13 +31,13 @@ impl TokenScanner {
         if self.pos >= self.tokens.len() {
             None
         } else {
-            let t = &self.tokens[self.pos];
+            let t = &self.tokens[self.pos].token_type;
             self.pos += 1;
             Some(t)
         }
     }
 
-    pub fn peek_token(&self) -> Option<&TokenType> {
+    pub fn peek_token(&self) -> Option<&Token> {
         self.tokens.get(self.pos)
     }
 }
@@ -60,100 +60,85 @@ impl TokenScanner {
                 '+' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::Plus, "+", self.line.clone()));
+                        .push(Token::new(TokenType::Plus, "+", self.line));
                 }
                 '-' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::Minus, "-", self.line.clone()));
+                        .push(Token::new(TokenType::Minus, "-", self.line));
                 }
                 '=' => {
                     chars.next();
                     if Self::match_expected(&mut chars, '=') {
-                        self.tokens.push(Token::new(
-                            TokenType::EqualEqual,
-                            "==",
-                            self.line.clone(),
-                        ));
+                        self.tokens
+                            .push(Token::new(TokenType::EqualEqual, "==", self.line));
                     } else {
                         self.tokens
-                            .push(Token::new(TokenType::Equal, "=", self.line.clone()));
+                            .push(Token::new(TokenType::Equal, "=", self.line));
                     }
                 }
                 '>' => {
                     chars.next();
                     if Self::match_expected(&mut chars, '=') {
-                        self.tokens.push(Token::new(
-                            TokenType::GreaterEqual,
-                            ">=",
-                            self.line.clone(),
-                        ));
+                        self.tokens
+                            .push(Token::new(TokenType::GreaterEqual, ">=", self.line));
                     } else {
-                        self.tokens.push(Token::new(
-                            TokenType::GreaterThan,
-                            ">",
-                            self.line.clone(),
-                        ));
+                        self.tokens
+                            .push(Token::new(TokenType::GreaterThan, ">", self.line));
                     }
                 }
                 '<' => {
                     chars.next();
                     if Self::match_expected(&mut chars, '=') {
                         self.tokens
-                            .push(Token::new(TokenType::LessEqual, "<=", self.line.clone()));
+                            .push(Token::new(TokenType::LessEqual, "<=", self.line));
                     } else {
                         self.tokens
-                            .push(Token::new(TokenType::LessThan, "<", self.line.clone()));
+                            .push(Token::new(TokenType::LessThan, "<", self.line));
                     }
                 }
                 '!' => {
                     chars.next();
                     if Self::match_expected(&mut chars, '=') {
                         self.tokens
-                            .push(Token::new(TokenType::NotEqual, "!=", self.line.clone()));
+                            .push(Token::new(TokenType::NotEqual, "!=", self.line));
                     } else {
                         self.tokens.push(Token::new(
                             TokenType::Invalid("Unexpected '!'".into()),
                             "Temp error thingy",
-                            self.line.clone(),
+                            self.line,
                         ));
                     }
                 }
                 '{' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::BraceLeft, "{", self.line.clone()));
+                        .push(Token::new(TokenType::BraceLeft, "{", self.line));
                 }
                 '}' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::BraceRight, "}", self.line.clone()));
+                        .push(Token::new(TokenType::BraceRight, "}", self.line));
                 }
                 '(' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::BracketLeft, "(", self.line.clone()));
+                        .push(Token::new(TokenType::BracketLeft, "(", self.line));
                 }
                 ')' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::BracketRight, ")", self.line.clone()));
+                        .push(Token::new(TokenType::BracketRight, ")", self.line));
                 }
                 '[' => {
                     chars.next();
-                    self.tokens.push(Token::new(
-                        TokenType::ParenthesesLeft,
-                        "[",
-                        self.line.clone(),
-                    ));
+                    self.tokens
+                        .push(Token::new(TokenType::ParenthesesLeft, "[", self.line));
                 }
                 ']' => {
                     chars.next();
-                    self.tokens.push(Token::new(
-                        TokenType::ParenthesesRight,
-                        ")",
-                        self.line.clone(),
-                    ));
+                    self.tokens
+                        .push(Token::new(TokenType::ParenthesesRight, ")", self.line));
                 }
                 '"' => {
                     chars.next();
@@ -170,13 +155,13 @@ impl TokenScanner {
                         self.tokens.push(Token::new(
                             TokenType::Invalid("Unterminated string literal".into()),
                             "Handle this error in a bit",
-                            self.line.clone(),
+                            self.line,
                         ));
                     } else {
                         self.tokens.push(Token::new(
                             TokenType::StringLiteral(s),
                             &s.clone(),
-                            self.line.clone(),
+                            self.line,
                         ));
                     }
                 }
@@ -189,7 +174,7 @@ impl TokenScanner {
                             self.tokens.push(Token::new(
                                 TokenType::Invalid("Unterminated character literal".into()),
                                 "other error again",
-                                self.line.clone(),
+                                self.line,
                             ));
                             continue;
                         }
@@ -200,14 +185,14 @@ impl TokenScanner {
                             self.tokens.push(Token::new(
                                 TokenType::CharLiteral(char_value),
                                 &ch.clone().to_string().as_str(),
-                                self.line.clone(),
+                                self.line,
                             ));
                         }
                         _ => {
                             self.tokens.push(Token::new(
                                 TokenType::Invalid("Unterminated character literal".into()),
                                 &ch.clone().to_string().as_str(),
-                                self.line.clone(),
+                                self.line,
                             ));
                         }
                     }
@@ -230,13 +215,13 @@ impl TokenScanner {
                         self.tokens.push(Token::new(
                             TokenType::Keyword(KeywordType::from_str(&s).unwrap()),
                             &s.as_str(),
-                            self.line.clone(),
+                            self.line,
                         )); // TODO: Error handling
                     } else {
                         self.tokens.push(Token::new(
-                            TokenType::Identifier(s),
-                            &s.as_str(),
-                            self.line.clone(),
+                            TokenType::Identifier(s.clone()),
+                            &s.to_string(),
+                            self.line,
                         ));
                     }
                 }
@@ -265,12 +250,12 @@ impl TokenScanner {
                         }
                     } else {
                         self.tokens
-                            .push(Token::new(TokenType::Divide, "/", self.line.clone()));
+                            .push(Token::new(TokenType::Divide, "/", self.line));
                     }
                 }
                 '*' => {
                     self.tokens
-                        .push(Token::new(TokenType::Multiply, "*", self.line.clone()));
+                        .push(Token::new(TokenType::Multiply, "*", self.line));
                 }
                 '0'..='9' => {
                     let mut s = "".to_owned();
@@ -281,7 +266,7 @@ impl TokenScanner {
                             self.tokens.push(Token::new(
                                 TokenType::Number(s.parse::<u32>().unwrap()),
                                 s.as_str(),
-                                self.line.clone(),
+                                self.line,
                             ));
                             break;
                         }
@@ -292,7 +277,7 @@ impl TokenScanner {
                 }
                 ';' => self
                     .tokens
-                    .push(Token::new(TokenType::SemiColon, ";", self.line.clone())),
+                    .push(Token::new(TokenType::SemiColon, ";", self.line)),
                 _ => {
                     report(Error::new("Invalid Character Placeholder", 16));
                     exit(1);
