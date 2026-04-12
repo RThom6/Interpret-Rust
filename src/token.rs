@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
@@ -6,7 +6,7 @@ pub struct Token {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TokenType {
     Plus,
     Minus,
@@ -40,7 +40,7 @@ pub enum TokenType {
     EOF,
 } // TODO: Do I want invalid tokens? Optionally I could just error when I reach an invalid token? It would let me make a full trace of what's wrong with the input if I didn't error out immediately.
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum KeywordType {
     If,
     Else,

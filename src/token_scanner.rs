@@ -159,7 +159,7 @@ impl TokenScanner {
                         ));
                     } else {
                         self.tokens.push(Token::new(
-                            TokenType::StringLiteral(s),
+                            TokenType::StringLiteral(s.clone()),
                             &s.clone(),
                             self.line,
                         ));
@@ -275,9 +275,11 @@ impl TokenScanner {
                         chars.next();
                     }
                 }
-                ';' => self
-                    .tokens
-                    .push(Token::new(TokenType::SemiColon, ";", self.line)),
+                ';' => {
+                    self.tokens
+                        .push(Token::new(TokenType::SemiColon, ";", self.line));
+                    chars.next();
+                }
                 _ => {
                     report(Error::new("Invalid Character Placeholder", 16));
                     exit(1);
