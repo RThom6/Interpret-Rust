@@ -231,7 +231,7 @@ impl TokenScanner {
                         while let Some((_, c)) = chars.peek() {
                             if *c == '\n' {
                                 // Comments go until the end of a line
-                                // TODO: Add eof? We'd get stuck without it or reach an error state. Should look at this in multiple locations
+                                // TODO: Not sure how this will handle the end of a file
                                 break;
                             }
                             chars.next();

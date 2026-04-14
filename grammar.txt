@@ -12,3 +12,13 @@ Unary -> UnaryOperator Expression
 UnaryOperator -> - | !
 Binary -> Expression Operator Expression
 Operator -> == | != | < | <= | > | >= | + | - | * | /
+
+### Removing Ambiguity
+
+Expression => equality;
+Equality => comparison ( ( "!=" | "==" ) comparison )* ;
+Comparison => term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+Term => factor ( ( "-" | "+" ) factor )* ;
+Factor => unary ( ( "/" | "*" ) unary )* ;
+Unary => ( "!" | "-" ) unary | primary ;
+Primary => NUMBER | STRING | "true" | "false" | "null" | "(" expression ")" ;
