@@ -280,6 +280,10 @@ impl TokenScanner {
                         .push(Token::new(TokenType::SemiColon, ";", self.line));
                     chars.next();
                 }
+                '\0' => {
+                    self.tokens.push(Token::new(TokenType::EOF, "", self.line));
+                    break;
+                }
                 _ => {
                     report(Error::new("Invalid Character Placeholder", 16));
                     exit(1);
