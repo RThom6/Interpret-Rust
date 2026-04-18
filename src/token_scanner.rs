@@ -123,22 +123,22 @@ impl TokenScanner {
                 '(' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::BracketLeft, "(", self.line));
+                        .push(Token::new(TokenType::ParenthesesLeft, "(", self.line));
                 }
                 ')' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::BracketRight, ")", self.line));
+                        .push(Token::new(TokenType::ParenthesesRight, ")", self.line));
                 }
                 '[' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::ParenthesesLeft, "[", self.line));
+                        .push(Token::new(TokenType::BracketLeft, "[", self.line));
                 }
                 ']' => {
                     chars.next();
                     self.tokens
-                        .push(Token::new(TokenType::ParenthesesRight, ")", self.line));
+                        .push(Token::new(TokenType::BracketRight, ")", self.line));
                 }
                 '"' => {
                     chars.next();
@@ -271,7 +271,7 @@ impl TokenScanner {
                             break;
                         }
 
-                        s.push(ch);
+                        s.push(*c);
                         chars.next();
                     }
                 }
@@ -280,16 +280,13 @@ impl TokenScanner {
                         .push(Token::new(TokenType::SemiColon, ";", self.line));
                     chars.next();
                 }
-                '\0' => {
-                    self.tokens.push(Token::new(TokenType::EOF, "", self.line));
-                    break;
-                }
                 _ => {
                     report(Error::new("Invalid Character Placeholder", 16));
                     exit(1);
                 }
             }
         }
+        self.tokens.push(Token::new(TokenType::EOF, "", self.line));
     }
 
     /// Checks whether the next character matches the expected character.
