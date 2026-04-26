@@ -46,7 +46,7 @@ impl TokenScanner {
     fn populate_tokens(&mut self) {
         let mut chars = self.input.char_indices().peekable();
 
-        // Does this fall off gracefully at EOF?
+        // Does this fall off gracefully at EOF? - Rust file reader doesn't seem to parse an EOF character at all... so probably?
         while let Some((_, ch)) = chars.peek().cloned() {
             match ch {
                 ' ' | '\t' | '\r' => {
@@ -231,7 +231,7 @@ impl TokenScanner {
                         while let Some((_, c)) = chars.peek() {
                             if *c == '\n' {
                                 // Comments go until the end of a line
-                                // TODO: Not sure how this will handle the end of a file
+                                // TODO: Not sure how this will handle the end of a file - same as last comment on this lol
                                 break;
                             }
                             chars.next();

@@ -1,5 +1,5 @@
 pub struct Error {
-    message: &'static str,
+    pub message: &'static str,
     trace: String,
     line: u64,
 }

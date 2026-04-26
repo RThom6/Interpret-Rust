@@ -1,5 +1,6 @@
+use crate::error::Error;
 use crate::expr::{Expr, Value};
-use crate::token::{Token, TokenKind};
+use crate::token::{Token, TokenKind, TokenType};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -126,10 +127,13 @@ impl Parser {
 
         if self.check_match(&[TokenKind::ParenthesesLeft]) {
             let expr: Expr = self.expression();
-            self.consume(
+            match self.consume(
                 TokenKind::ParenthesesRight,
                 "Expected ')' after expression.",
-            );
+            ) {
+                Ok(token) => token,
+                Err(e) => panic!("{}", e.message), // Placeholder error, wnat to hand it back have it store it to print as a trace at theend maybe? Decision pending i guess
+            };
             return Expr::Grouping {
                 expression: Box::new(expr),
             };
@@ -138,16 +142,31 @@ impl Parser {
         panic!("Unexpected token: {:?}", self.peek());
     }
 
-    fn consume(&mut self, kind: TokenKind, message: &str) {
-        if self.check(kind.clone()) {
-            self.advance();
-            return;
-        }
+    fn synchronize(&mut self) {
+        self.advance();
 
-        panic!("{}", message);
+        while (!self.is_at_end()) {
+            if (self.previous().token_type == TokenType::SemiColon) {
+                return;
+            }
+        }
     }
 
-    fn parse_error(&mut self, token: Token, message: &str) {}
+    fn consume(&mut self, kind: TokenKind, message: &str) -> Result<Token, Error> {
+        if self.check(kind.clone()) {
+            return Ok(self.advance());
+        }
+        // TODO: implement error handling properly, will probably do it when it's mostly done or debugging starts annoying me
+        // Need to report the error to the user and then pass it back and handle it accordingly
+        // Probably looking to report multiple errors at once to be useful since you don't want to just debug
+        // based on  the first error of your code and nothing else, would get very annoying very quickly.
+        return Err(self.parse_error(kind, message));
+    }
+
+    fn parse_error(&mut self, kind: TokenKind, message: &str) -> Error {
+        // error handling
+        return Error::new("placeholder error error", 765);
+    }
 
     fn previous(&mut self) -> Token {
         self.tokens[self.current - 1].clone()
