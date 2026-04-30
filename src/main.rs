@@ -11,6 +11,8 @@ pub mod token;
 mod token_scanner;
 use token_scanner::TokenScanner;
 
+use crate::parser::Parser;
+
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
 
@@ -43,4 +45,9 @@ fn run(contents: String) {
     while let Some(token) = scanner.next_token() {
         println!("{:?}", token);
     }
+    let tokens = scanner.tokens();
+
+    let mut parser = Parser::new(tokens);
+
+    let expr = parser.parse();
 }

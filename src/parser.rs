@@ -3,20 +3,22 @@ use crate::expr::{Expr, Value};
 use crate::token::{Token, TokenKind, TokenType};
 
 #[derive(Debug)]
-pub struct Parser {
-    tokens: Vec<Token>,
+pub struct Parser<'a> {
+    tokens: &'a Vec<Token>,
     current: usize,
 }
 
-impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(tokens: &'a Vec<Token>) -> Self {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) {}
+    pub fn parse(&mut self) -> Expr {
+        self.expression()
+    }
 }
 
-impl Parser {
+impl<'a> Parser<'a> {
     fn expression(&mut self) -> Expr {
         return self.equality();
     }
@@ -24,7 +26,7 @@ impl Parser {
     fn equality(&mut self) -> Expr {
         let mut expr: Expr = self.comparison();
 
-        while (self.check_match(&[TokenKind::NotEqual, TokenKind::EqualEqual])) {
+        while self.check_match(&[TokenKind::NotEqual, TokenKind::EqualEqual]) {
             let operator: Token = self.previous();
             let right: Expr = self.comparison();
             expr = Expr::Binary {
@@ -142,12 +144,20 @@ impl Parser {
         panic!("Unexpected token: {:?}", self.peek());
     }
 
+    // TODO: error handling method, looks for statement boundary, should call it when I catch a parse error
     fn synchronize(&mut self) {
         self.advance();
 
-        while (!self.is_at_end()) {
-            if (self.previous().token_type == TokenType::SemiColon) {
+        while !self.is_at_end() {
+            if self.previous().token_type == TokenType::SemiColon {
                 return;
+            }
+
+            match self.peek().token_type.kind() {
+                TokenKind::Identifier => {}
+                _ => {
+                    self.advance();
+                }
             }
         }
     }

@@ -27,6 +27,10 @@ impl TokenScanner {
         scanner
     }
 
+    pub fn tokens(&self) -> &Vec<Token> {
+        &self.tokens
+    }
+
     pub fn next_token(&mut self) -> Option<&TokenType> {
         if self.pos >= self.tokens.len() {
             None
