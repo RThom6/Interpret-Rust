@@ -1,6 +1,6 @@
 use crate::error::Error;
 use crate::expr::{Expr, Value};
-use crate::token::{Token, TokenKind, TokenType};
+use crate::token::{KeywordType, Token, TokenKind, TokenType};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -19,6 +19,20 @@ impl<'a> Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
+    fn statement(&mut self) -> Expr {
+        match self.peek().token_type.kind() {
+            TokenKind::If => self.if_statement(),
+            TokenKind::While => self.while_statement(),
+            _ => self.expression(),
+        }
+    }
+
+    fn if_statement(&mut self) -> Expr {
+        self.consume(kind, message)
+    }
+
+    fn while_statement(&mut self) -> Expr {}
+
     fn expression(&mut self) -> Expr {
         return self.equality();
     }

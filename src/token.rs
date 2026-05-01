@@ -31,12 +31,18 @@ pub enum TokenType {
     MinusEqual,
     EqualPlus,
     EqualMinus,
+    If,
+    Else,
+    While,
+    Return,
+    Break,
+    Continue,
+    Null,
     Number(u32),
     StringLiteral(String),
     CharLiteral(char),
     Invalid(String),
     Identifier(String),
-    Keyword(KeywordType),
     EOF,
 } // TODO: Do I want invalid tokens? Optionally I could just error when I reach an invalid token? It would let me make a full trace of what's wrong with the input if I didn't error out immediately.
 
@@ -70,7 +76,13 @@ pub enum TokenKind {
     CharLiteral,
     Invalid,
     Identifier,
-    Keyword,
+    If,
+    Else,
+    While,
+    Return,
+    Break,
+    Continue,
+    Null,
     EOF,
 }
 
@@ -100,28 +112,34 @@ impl TokenType {
             TokenType::MinusEqual => TokenKind::MinusEqual,
             TokenType::EqualPlus => TokenKind::EqualPlus,
             TokenType::EqualMinus => TokenKind::EqualMinus,
+            TokenType::If => TokenKind::If,
+            TokenType::While => TokenKind::While,
+            TokenType::Else => TokenKind::Else,
+            TokenType::Return => TokenKind::Return,
+            TokenType::Break => TokenKind::Break,
+            TokenType::Continue => TokenKind::Continue,
+            TokenType::Null => TokenKind::Null,
             TokenType::Number(_) => TokenKind::Number,
             TokenType::StringLiteral(_) => TokenKind::StringLiteral,
             TokenType::CharLiteral(_) => TokenKind::CharLiteral,
             TokenType::Invalid(_) => TokenKind::Invalid,
             TokenType::Identifier(_) => TokenKind::Identifier,
-            TokenType::Keyword(_) => TokenKind::Keyword,
             TokenType::EOF => TokenKind::EOF,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum KeywordType {
-    If,
-    Else,
-    While,
-    For,
-    Return,
-    Break,
-    Continue,
-    Null,
-}
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// pub enum KeywordType {
+//     If,
+//     Else,
+//     While,
+//     For,
+//     Return,
+//     Break,
+//     Continue,
+//     Null,
+// }
 
 impl Token {
     pub fn new(token_type: TokenType, lexeme: &str, line: usize) -> Self {
@@ -133,13 +151,12 @@ impl Token {
     }
 }
 
-impl KeywordType {
+impl TokenType {
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
             "if" => Some(Self::If),
             "else" => Some(Self::Else),
             "while" => Some(Self::While),
-            "for" => Some(Self::For),
             "return" => Some(Self::Return),
             "break" => Some(Self::Break),
             "continue" => Some(Self::Continue),

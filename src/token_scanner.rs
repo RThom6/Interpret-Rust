@@ -1,7 +1,7 @@
 use std::process::exit;
 
 use crate::error::{Error, report};
-use crate::token::{KeywordType, Token, TokenType};
+use crate::token::{Token, TokenType};
 
 #[allow(dead_code)]
 static KEYWORDS: [&str; 8] = [
@@ -217,7 +217,7 @@ impl TokenScanner {
 
                     if KEYWORDS.contains(&s.as_str()) {
                         self.tokens.push(Token::new(
-                            TokenType::Keyword(KeywordType::from_str(&s).unwrap()),
+                            TokenType::from_str(&s).unwrap(),
                             &s.as_str(),
                             self.line,
                         )); // TODO: Error handling
