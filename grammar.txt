@@ -17,7 +17,7 @@ Operator -> == | != | < | <= | > | >= | + | - | * | /
 
 Statement => ifStatement | whileStatement | assignmentStatement ;
 AssignmentStatement => IDENTIFIER "=" expression ;
-IfStatement => "if" "(" expression ")" statement ( "else" statement )? ;
+IfStatement => "if" "(" expression ")" "{" statement "}" ( "else" "{" statement "}" )? ;
 WhileStatement => "while" "(" Expression ")" statement ;
 Expression => equality;
 Equality => comparison ( ( "!=" | "==" ) comparison )* ;

@@ -1,6 +1,6 @@
 use crate::error::Error;
 use crate::expr::{Expr, Value};
-use crate::token::{KeywordType, Token, TokenKind, TokenType};
+use crate::token::{Token, TokenKind, TokenType};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -28,10 +28,83 @@ impl<'a> Parser<'a> {
     }
 
     fn if_statement(&mut self) -> Expr {
-        self.consume(kind, message)
+        match self.consume(TokenKind::If, "Expected 'If' statement") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        match self.consume(TokenKind::ParenthesesLeft, "Expected opening parentheses") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        let condition = self.expression();
+
+        match self.consume(TokenKind::ParenthesesRight, "Expected closing parentheses") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        match self.consume(TokenKind::BraceLeft, "Expected opening brace") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        let then_branch = self.statement();
+
+        match self.consume(TokenKind::BraceRight, "Expected opening brace") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        let else_branch = if self.check_match(&[TokenKind::Else]) {
+            Some(Box::new(self.statement()))
+        } else {
+            None
+        };
+
+        Expr::If {
+            condition: Box::new(condition),
+            then_branch: Box::new(then_branch),
+            else_branch,
+        }
     }
 
-    fn while_statement(&mut self) -> Expr {}
+    fn while_statement(&mut self) -> Expr {
+        match self.consume(TokenKind::While, "Expected 'While' statement") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        match self.consume(TokenKind::ParenthesesLeft, "Expected opening parentheses") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        let condition = self.expression();
+
+        match self.consume(TokenKind::ParenthesesRight, "Expected closing parentheses") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        match self.consume(TokenKind::BraceLeft, "Expected opening brace") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        let then_branch = self.statement();
+
+        match self.consume(TokenKind::BraceRight, "Expected opening brace") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        Expr::While {
+            condition: Box::new(condition),
+            then_branch: Box::new(then_branch),
+        }
+    }
 
     fn expression(&mut self) -> Expr {
         return self.equality();

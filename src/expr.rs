@@ -28,6 +28,17 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+
+    If {
+        condition: Box<Expr>,
+        then_branch: Box<Expr>,
+        else_branch: Option<Box<Expr>>,
+    },
+
+    While {
+        condition: Box<Expr>,
+        then_branch: Box<Expr>,
+    },
 }
 
 impl Expr {
@@ -63,6 +74,38 @@ impl Expr {
                     (TokenType::Minus, Value::Number(n)) => Value::Number(-n),
                     (TokenType::Bang, Value::Bool(r)) => Value::Bool(!r),
                     _ => panic!("Runtime Error: Invalid operand for unary operator."),
+                }
+            }
+
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                let cond_val = condition.evaluate();
+                match cond_val {
+                    Value::Bool(true) => then_branch.evaluate(),
+                    Value::Bool(false) => {
+                        if let Some(else_expr) = else_branch {
+                            else_expr.evaluate()
+                        } else {
+                            Value::Null
+                        }
+                    }
+                    _ => panic!("Runtime Error: If condition must be a boolean."),
+                }
+            }
+
+            Expr::While {
+                condition,
+                then_branch,
+            } => {
+                let cond_val = condition.evaluate();
+
+                match cond_val {
+                    Value::Bool(true) => then_branch.evaluate(),
+                    Value::Bool(false) => Value::Null,
+                    _ => panic!("Runtime Error: While condition must be a boolean"),
                 }
             }
         }
