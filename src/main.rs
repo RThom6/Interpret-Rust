@@ -6,6 +6,7 @@ use std::{
 };
 pub mod error;
 pub mod expr;
+pub mod interpreter;
 pub mod parser;
 pub mod token;
 mod token_scanner;
