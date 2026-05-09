@@ -4,8 +4,8 @@ use crate::error::{Error, report};
 use crate::token::{Token, TokenType};
 
 #[allow(dead_code)]
-static KEYWORDS: [&str; 8] = [
-    "if", "else", "while", "for", "return", "break", "continue", "null",
+static KEYWORDS: [&str; 9] = [
+    "if", "else", "while", "for", "return", "break", "continue", "null", "let",
 ];
 
 pub struct TokenScanner {

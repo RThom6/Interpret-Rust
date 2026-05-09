@@ -6,12 +6,12 @@ use std::{
 };
 pub mod error;
 pub mod expr;
-pub mod interpreter;
 pub mod parser;
 pub mod token;
 mod token_scanner;
 use token_scanner::TokenScanner;
 
+use crate::expr::Environment;
 use crate::parser::Parser;
 
 fn main() {
@@ -49,6 +49,9 @@ fn run(contents: String) {
     let tokens = scanner.tokens();
 
     let mut parser = Parser::new(tokens);
+    let program = parser.parse();
 
-    let expr = parser.parse();
+    let mut env = Environment::new();
+    let result = program.evaluate(&mut env);
+    println!("=> {:?}", result);
 }

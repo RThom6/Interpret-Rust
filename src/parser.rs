@@ -14,7 +14,11 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Expr {
-        self.expression()
+        let mut stmts: Vec<Expr> = Vec::new();
+        while !self.is_at_end() {
+            stmts.push(self.statement());
+        }
+        Expr::Block { exprs: stmts }
     }
 }
 
@@ -23,8 +27,67 @@ impl<'a> Parser<'a> {
         match self.peek().token_type.kind() {
             TokenKind::If => self.if_statement(),
             TokenKind::While => self.while_statement(),
-            _ => self.expression(),
+            TokenKind::Let => self.let_statement(),
+            TokenKind::BraceLeft => self.block(),
+            _ => self.expression_statement(),
         }
+    }
+
+    fn block(&mut self) -> Expr {
+        match self.consume(TokenKind::BraceLeft, "Expected '{'") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        let mut exprs: Vec<Expr> = Vec::new();
+        while !self.check(TokenKind::BraceRight) && !self.is_at_end() {
+            exprs.push(self.statement());
+        }
+
+        match self.consume(TokenKind::BraceRight, "Expected '}'") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        Expr::Block { exprs }
+    }
+
+    fn let_statement(&mut self) -> Expr {
+        match self.consume(TokenKind::Let, "Expected 'let'") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        let name = match self.consume(TokenKind::Identifier, "Expected identifier after 'let'") {
+            Ok(t) => t,
+            Err(err) => panic!("{}", err.message),
+        };
+
+        match self.consume(TokenKind::Equal, "Expected '=' after let name") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        let initializer = self.expression();
+
+        match self.consume(TokenKind::SemiColon, "Expected ';' after let declaration") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+
+        Expr::Let {
+            name,
+            initializer: Box::new(initializer),
+        }
+    }
+
+    fn expression_statement(&mut self) -> Expr {
+        let expr = self.expression();
+        match self.consume(TokenKind::SemiColon, "Expected ';' after expression") {
+            Ok(_) => {}
+            Err(err) => panic!("{}", err.message),
+        }
+        expr
     }
 
     fn if_statement(&mut self) -> Expr {
@@ -45,17 +108,7 @@ impl<'a> Parser<'a> {
             Err(err) => panic!("{}", err.message),
         }
 
-        match self.consume(TokenKind::BraceLeft, "Expected opening brace") {
-            Ok(_) => {}
-            Err(err) => panic!("{}", err.message),
-        }
-
         let then_branch = self.statement();
-
-        match self.consume(TokenKind::BraceRight, "Expected opening brace") {
-            Ok(_) => {}
-            Err(err) => panic!("{}", err.message),
-        }
 
         let else_branch = if self.check_match(&[TokenKind::Else]) {
             Some(Box::new(self.statement()))
@@ -88,17 +141,7 @@ impl<'a> Parser<'a> {
             Err(err) => panic!("{}", err.message),
         }
 
-        match self.consume(TokenKind::BraceLeft, "Expected opening brace") {
-            Ok(_) => {}
-            Err(err) => panic!("{}", err.message),
-        }
-
         let then_branch = self.statement();
-
-        match self.consume(TokenKind::BraceRight, "Expected opening brace") {
-            Ok(_) => {}
-            Err(err) => panic!("{}", err.message),
-        }
 
         Expr::While {
             condition: Box::new(condition),
@@ -107,7 +150,26 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Expr {
-        return self.equality();
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Expr {
+        let expr = self.equality();
+
+        if self.check_match(&[TokenKind::Equal]) {
+            let value = self.assignment();
+            match expr {
+                Expr::Variable { name } => {
+                    return Expr::Assign {
+                        name,
+                        value: Box::new(value),
+                    };
+                }
+                _ => panic!("Invalid assignment target."),
+            }
+        }
+
+        expr
     }
 
     fn equality(&mut self) -> Expr {
@@ -194,10 +256,8 @@ impl<'a> Parser<'a> {
 
     fn primary(&mut self) -> Expr {
         if self.check_match(&[TokenKind::Identifier]) {
-            let value: String = self.previous().lexeme.parse().unwrap();
-            return Expr::Literal {
-                value: Value::String(value),
-            };
+            let name = self.previous();
+            return Expr::Variable { name };
         }
 
         if self.check_match(&[TokenKind::Number]) {
@@ -302,5 +362,6 @@ impl<'a> Parser<'a> {
 
     fn is_at_end(&self) -> bool {
         self.current >= self.tokens.len()
+            || matches!(self.tokens[self.current].token_type, TokenType::EOF)
     }
 }

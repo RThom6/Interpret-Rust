@@ -38,6 +38,7 @@ pub enum TokenType {
     Break,
     Continue,
     Null,
+    Let,
     Number(u32),
     StringLiteral(String),
     CharLiteral(char),
@@ -83,6 +84,7 @@ pub enum TokenKind {
     Break,
     Continue,
     Null,
+    Let,
     EOF,
 }
 
@@ -119,6 +121,7 @@ impl TokenType {
             TokenType::Break => TokenKind::Break,
             TokenType::Continue => TokenKind::Continue,
             TokenType::Null => TokenKind::Null,
+            TokenType::Let => TokenKind::Let,
             TokenType::Number(_) => TokenKind::Number,
             TokenType::StringLiteral(_) => TokenKind::StringLiteral,
             TokenType::CharLiteral(_) => TokenKind::CharLiteral,
@@ -161,6 +164,7 @@ impl TokenType {
             "break" => Some(Self::Break),
             "continue" => Some(Self::Continue),
             "null" => Some(Self::Null),
+            "let" => Some(Self::Let),
             _ => None,
         }
     }
