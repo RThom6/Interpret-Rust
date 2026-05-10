@@ -16,3 +16,9 @@ Term => Factor ( ( "-" | "+" ) Factor )* ;
 Factor => Unary ( ( "/" | "*" ) Unary )* ;
 Unary => ( "!" | "-" ) Unary | Primary ;
 Primary => number | string | "true" | "false" | "null" | "(" expression ")" ;
+
+
+### What is this branch??
+
+I went overboard early on and created a boat load of different token types thinking about my own language.
+Since I was following 'Crafting Interpreters' by Robert Nystrom I've sent myself into a crazy spiral where I now have no idea what my next move is because I went a bit overboard. This branch is to basically reel that in, get rid of the more random and complex stuff and follow the book a bit more truthfully.

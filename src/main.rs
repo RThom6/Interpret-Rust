@@ -51,7 +51,6 @@ fn run(contents: String) {
     let mut parser = Parser::new(tokens);
     let program = parser.parse();
 
-    let mut env = Environment::new();
-    let result = program.evaluate(&mut env);
+    let result = program.evaluate(&mut program.clone());
     println!("=> {:?}", result);
 }

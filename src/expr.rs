@@ -105,7 +105,7 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn evaluate(&self, env: &mut Environment) -> Value {
+    pub fn evaluate(&self, env: &mut Expr) -> Value {
         match self {
             Expr::Literal { value } => value.clone(),
 
@@ -194,32 +194,7 @@ impl Expr {
                 Value::Null
             }
 
-            Expr::Variable { name } => env
-                .get(&name.lexeme)
-                .unwrap_or_else(|| panic!("Runtime Error: Undefined variable '{}'.", name.lexeme)),
-
-            Expr::Assign { name, value } => {
-                let v = value.evaluate(env);
-                env.assign(&name.lexeme, v.clone())
-                    .unwrap_or_else(|e| panic!("Runtime Error: {}", e));
-                v
-            }
-
-            Expr::Let { name, initializer } => {
-                let v = initializer.evaluate(env);
-                env.define(name.lexeme.clone(), v);
-                Value::Null
-            }
-
-            Expr::Block { exprs } => {
-                env.push_scope();
-                let mut last = Value::Null;
-                for e in exprs {
-                    last = e.evaluate(env);
-                }
-                env.pop_scope();
-                last
-            }
+            _ => Value::Null,
         }
     }
 }

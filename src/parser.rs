@@ -255,6 +255,22 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> Expr {
+        if self.check_match(&[TokenKind::True]) {
+            return Expr::Literal {
+                value: Value::Bool(true),
+            };
+        }
+
+        if self.check_match(&[TokenKind::False]) {
+            return Expr::Literal {
+                value: Value::Bool(false),
+            };
+        }
+
+        if self.check_match(&[TokenKind::Null]) {
+            return Expr::Literal { value: Value::Null };
+        }
+
         if self.check_match(&[TokenKind::Identifier]) {
             let name = self.previous();
             return Expr::Variable { name };
@@ -291,23 +307,23 @@ impl<'a> Parser<'a> {
         panic!("Unexpected token: {:?}", self.peek());
     }
 
-    // TODO: error handling method, looks for statement boundary, should call it when I catch a parse error
-    fn synchronize(&mut self) {
-        self.advance();
+    // TODO: error handling method, looks for statement boundary, should call it when I catch a parse error - Find in chapter 6
+    // fn synchronize(&mut self) {
+    //     self.advance();
 
-        while !self.is_at_end() {
-            if self.previous().token_type == TokenType::SemiColon {
-                return;
-            }
+    //     while !self.is_at_end() {
+    //         if self.previous().token_type == TokenType::SemiColon {
+    //             return;
+    //         }
 
-            match self.peek().token_type.kind() {
-                TokenKind::Identifier => {}
-                _ => {
-                    self.advance();
-                }
-            }
-        }
-    }
+    //         match self.peek().token_type.kind() {
+    //             TokenKind::Return => {}
+    //             _ => {
+    //                 self.advance();
+    //             }
+    //         }
+    //     }
+    // }
 
     fn consume(&mut self, kind: TokenKind, message: &str) -> Result<Token, Error> {
         if self.check(kind.clone()) {
@@ -362,6 +378,5 @@ impl<'a> Parser<'a> {
 
     fn is_at_end(&self) -> bool {
         self.current >= self.tokens.len()
-            || matches!(self.tokens[self.current].token_type, TokenType::EOF)
     }
 }

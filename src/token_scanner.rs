@@ -3,11 +3,6 @@ use std::process::exit;
 use crate::error::{Error, report};
 use crate::token::{Token, TokenType};
 
-#[allow(dead_code)]
-static KEYWORDS: [&str; 9] = [
-    "if", "else", "while", "for", "return", "break", "continue", "null", "let",
-];
-
 pub struct TokenScanner {
     input: String,
     tokens: Vec<Token>,
@@ -134,16 +129,6 @@ impl TokenScanner {
                     self.tokens
                         .push(Token::new(TokenType::ParenthesesRight, ")", self.line));
                 }
-                '[' => {
-                    chars.next();
-                    self.tokens
-                        .push(Token::new(TokenType::BracketLeft, "[", self.line));
-                }
-                ']' => {
-                    chars.next();
-                    self.tokens
-                        .push(Token::new(TokenType::BracketRight, ")", self.line));
-                }
                 '"' => {
                     chars.next();
                     let mut s = String::new();
@@ -215,18 +200,13 @@ impl TokenScanner {
                         }
                     }
 
-                    if KEYWORDS.contains(&s.as_str()) {
-                        self.tokens.push(Token::new(
-                            TokenType::from_str(&s).unwrap(),
-                            &s.as_str(),
-                            self.line,
-                        )); // TODO: Error handling
-                    } else {
-                        self.tokens.push(Token::new(
+                    match TokenType::from_str(&s) {
+                        Some(tt) => self.tokens.push(Token::new(tt, &s.as_str(), self.line)),
+                        None => self.tokens.push(Token::new(
                             TokenType::Identifier(s.clone()),
-                            &s.to_string(),
+                            &s,
                             self.line,
-                        ));
+                        )),
                     }
                 }
                 '/' => {
@@ -290,7 +270,6 @@ impl TokenScanner {
                 }
             }
         }
-        self.tokens.push(Token::new(TokenType::EOF, "", self.line));
     }
 
     /// Checks whether the next character matches the expected character.
